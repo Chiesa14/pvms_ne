@@ -19,8 +19,13 @@ export const generateOutgoingCarsReport = async (req, res) => {
             });
         }
 
+        // Set start date to beginning of day
         const start = new Date(startDate);
+        start.setHours(0, 0, 0, 0);
+
+        // Set end date to end of day
         const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
 
         if (isNaN(start.getTime()) || isNaN(end.getTime())) {
             return res.status(400).json({
@@ -46,12 +51,11 @@ export const generateOutgoingCarsReport = async (req, res) => {
                     [Op.between]: [start, end],
                 },
             },
-            include: [
-                {
-                    model: ParkingSlot,
-                    attributes: ['name', 'location'],
-                },
-            ],
+            include: [{
+                model: ParkingSlot,
+                required: true,
+                attributes: ['name', 'location'],
+            }],
             attributes: [
                 'id',
                 'plate_number',
@@ -113,8 +117,13 @@ export const generateEnteredCarsReport = async (req, res) => {
             });
         }
 
+        // Set start date to beginning of day
         const start = new Date(startDate);
+        start.setHours(0, 0, 0, 0);
+
+        // Set end date to end of day
         const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
 
         if (isNaN(start.getTime()) || isNaN(end.getTime())) {
             return res.status(400).json({
@@ -140,12 +149,11 @@ export const generateEnteredCarsReport = async (req, res) => {
                     [Op.between]: [start, end],
                 },
             },
-            include: [
-                {
-                    model: ParkingSlot,
-                    attributes: ['name', 'location'],
-                },
-            ],
+            include: [{
+                model: ParkingSlot,
+                required: true,
+                attributes: ['name', 'location'],
+            }],
             attributes: [
                 'id',
                 'plate_number',

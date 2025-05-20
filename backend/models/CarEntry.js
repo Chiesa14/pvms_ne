@@ -39,6 +39,7 @@ const CarEntry = sequelize.define('CarEntry', {
     },
 }, {
     timestamps: true,
+    tableName: 'CarEntries',
 });
 
 export default CarEntry; 

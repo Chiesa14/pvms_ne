@@ -4,7 +4,16 @@ import CarEntry from './CarEntry.js';
 import Otp from './Otp.js';
 import Vehicle from './Vehicle.js';
 
-// Define associations if needed (none for now)
+// Define associations
+CarEntry.belongsTo(ParkingSlot, {
+    foreignKey: 'parking_code',
+    targetKey: 'code'
+});
+
+ParkingSlot.hasMany(CarEntry, {
+    foreignKey: 'parking_code',
+    sourceKey: 'code'
+});
 
 export {
     User,

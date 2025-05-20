@@ -1,146 +1,333 @@
 "use client";
-import React, { useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
+
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { format } from "date-fns";
+import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
+
+interface CarEntry {
+  id: number;
+  plate_number: string;
+  ticket_number: string;
+  entry_time: string;
+  exit_time: string | null;
+  amount: number;
+  ParkingSlot: {
+    name: string;
+    location: string;
+  };
+}
+
+interface ReportSummary {
+  totalCars: number;
+  totalAmount?: string;
+  activeCars?: number;
+  exitedCars?: number;
+  totalRevenue?: string;
+  dateRange: {
+    start: string;
+    end: string;
+  };
+}
+
+interface Pagination {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+interface ReportResponse {
+  success: boolean;
+  data: {
+    outgoingCars?: CarEntry[];
+    enteredCars?: CarEntry[];
+    summary: ReportSummary;
+    pagination: Pagination;
+  };
+}
 
 export default function ReportsPage() {
   const { user } = useAuth();
-  const [start, setStart] = useState("");
-  const [end, setEnd] = useState("");
-  const [outgoing, setOutgoing] = useState<any>(null);
-  const [entered, setEntered] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("outgoing");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [reportData, setReportData] = useState<ReportResponse | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
-  if (!user || user.role !== "admin") {
-    return <div className="text-red-500">Access denied. Admins only.</div>;
-  }
+  const fetchReport = async (type: "outgoing" | "entered") => {
+    if (!startDate || !endDate) {
+      toast.error("Please select both start and end dates");
+      return;
+    }
 
-  // Fetch outgoing cars report
-  const fetchOutgoing = async () => {
-    setLoading(true);
-    setError(null);
+    setIsLoading(true);
     try {
-      const res = await fetch(
-        `http://localhost:5000/api/reports/outgoing?start=${start}&end=${end}`,
+      const token = localStorage.getItem("authToken");
+      if (!token) throw new Error("Not authenticated");
+
+      const response = await fetch(
+        `http://localhost:5000/api/reports/${type}?startDate=${startDate}&endDate=${endDate}&page=${currentPage}&limit=${itemsPerPage}`,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
-      if (!res.ok) throw new Error("Failed to fetch outgoing report");
-      setOutgoing(await res.json());
-    } catch {
-      setError("Failed to fetch outgoing report");
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch report");
+      }
+
+      const data = await response.json();
+      setReportData(data);
+    } catch (error) {
+      toast.error("Failed to fetch report data");
+      console.error("Report fetch error:", error);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  // Fetch entered cars report
-  const fetchEntered = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch(
-        `http://localhost:5000/api/reports/entries?start=${start}&end=${end}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-          },
-        }
-      );
-      if (!res.ok) throw new Error("Failed to fetch entered report");
-      setEntered(await res.json());
-    } catch {
-      setError("Failed to fetch entered report");
-    } finally {
-      setLoading(false);
-    }
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    setReportData(null);
+    setCurrentPage(1);
+  };
+
+  const handleDateChange = () => {
+    setCurrentPage(1);
+    fetchReport(activeTab as "outgoing" | "entered");
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+    fetchReport(activeTab as "outgoing" | "entered");
+  };
+
+  const formatDate = (dateString: string) => {
+    return format(new Date(dateString), "MMM dd, yyyy HH:mm");
+  };
+
+  const formatAmount = (amount: number) => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    }).format(amount);
   };
 
   return (
-    <div className="space-y-12">
-      <h2 className="text-xl font-semibold mb-4">Reports</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Outgoing Cars Report */}
-        <Card className="p-4">
-          <h3 className="font-bold mb-2">Outgoing Cars Report</h3>
-          <div className="flex gap-2 mb-2">
-            <Input type="datetime-local" value={start} onChange={e => setStart(e.target.value)} />
-            <Input type="datetime-local" value={end} onChange={e => setEnd(e.target.value)} />
-            <Button onClick={fetchOutgoing} disabled={loading || !start || !end}>Fetch</Button>
-          </div>
-          {outgoing && (
-            <>
-              <div className="mb-2 font-semibold">Total Amount: ${outgoing.totalAmount}</div>
-              <div className="overflow-x-auto">
-                <table className="min-w-full border text-sm">
-                  <thead>
-                    <tr className="bg-gray-100">
-                      <th className="p-2">Ticket</th>
-                      <th className="p-2">Plate</th>
-                      <th className="p-2">Parking</th>
-                      <th className="p-2">Entry</th>
-                      <th className="p-2">Exit</th>
-                      <th className="p-2">Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {outgoing.cars.map((car: any) => (
-                      <tr key={car.id} className="border-b">
-                        <td className="p-2 font-mono">{car.ticket_number}</td>
-                        <td className="p-2">{car.plate_number}</td>
-                        <td className="p-2">{car.parking_code}</td>
-                        <td className="p-2">{car.entry_time ? new Date(car.entry_time).toLocaleString() : "-"}</td>
-                        <td className="p-2">{car.exit_time ? new Date(car.exit_time).toLocaleString() : "-"}</td>
-                        <td className="p-2">${car.amount}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </>
-          )}
-        </Card>
-        {/* Entered Cars Report */}
-        <Card className="p-4">
-          <h3 className="font-bold mb-2">Entered Cars Report</h3>
-          <div className="flex gap-2 mb-2">
-            <Input type="datetime-local" value={start} onChange={e => setStart(e.target.value)} />
-            <Input type="datetime-local" value={end} onChange={e => setEnd(e.target.value)} />
-            <Button onClick={fetchEntered} disabled={loading || !start || !end}>Fetch</Button>
-          </div>
-          {entered && (
-            <div className="overflow-x-auto">
-              <table className="min-w-full border text-sm">
-                <thead>
-                  <tr className="bg-gray-100">
-                    <th className="p-2">Ticket</th>
-                    <th className="p-2">Plate</th>
-                    <th className="p-2">Parking</th>
-                    <th className="p-2">Entry</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {entered.cars.map((car: any) => (
-                    <tr key={car.id} className="border-b">
-                      <td className="p-2 font-mono">{car.ticket_number}</td>
-                      <td className="p-2">{car.plate_number}</td>
-                      <td className="p-2">{car.parking_code}</td>
-                      <td className="p-2">{car.entry_time ? new Date(car.entry_time).toLocaleString() : "-"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </Card>
+    <div className="w-full">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Parking Reports</h1>
+        <div className="flex gap-4">
+          <Input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="w-48"
+          />
+          <Input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="w-48"
+          />
+          <Button onClick={handleDateChange} disabled={isLoading}>
+            {isLoading ? "Loading..." : "Generate Report"}
+          </Button>
+        </div>
       </div>
-      {error && <div className="text-red-500">{error}</div>}
+
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
+        <TabsList className="mb-4">
+          <TabsTrigger value="outgoing">Outgoing Cars</TabsTrigger>
+          <TabsTrigger value="entered">Entered Cars</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="outgoing">
+          <Card className="p-6">
+            {reportData?.data.summary && (
+              <div className="grid grid-cols-3 gap-4 mb-6">
+                <div className="bg-primary/10 p-4 rounded-lg">
+                  <h3 className="text-sm font-medium text-primary">Total Cars</h3>
+                  <p className="text-2xl font-bold">{reportData.data.summary.totalCars}</p>
+                </div>
+                <div className="bg-primary/10 p-4 rounded-lg">
+                  <h3 className="text-sm font-medium text-primary">Total Amount</h3>
+                  <p className="text-2xl font-bold">
+                    {formatAmount(parseFloat(reportData.data.summary.totalAmount || "0"))}
+                  </p>
+                </div>
+                <div className="bg-primary/10 p-4 rounded-lg">
+                  <h3 className="text-sm font-medium text-primary">Date Range</h3>
+                  <p className="text-sm">
+                    {formatDate(reportData.data.summary.dateRange.start)} -{" "}
+                    {formatDate(reportData.data.summary.dateRange.end)}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Ticket #</TableHead>
+                    <TableHead>Plate Number</TableHead>
+                    <TableHead>Parking Slot</TableHead>
+                    <TableHead>Entry Time</TableHead>
+                    <TableHead>Exit Time</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {reportData?.data.outgoingCars?.map((car) => (
+                    <TableRow key={car.id}>
+                      <TableCell>{car.ticket_number}</TableCell>
+                      <TableCell>{car.plate_number}</TableCell>
+                      <TableCell>
+                        {car.ParkingSlot.name} ({car.ParkingSlot.location})
+                      </TableCell>
+                      <TableCell>{formatDate(car.entry_time)}</TableCell>
+                      <TableCell>{formatDate(car.exit_time!)}</TableCell>
+                      <TableCell className="text-right">
+                        {formatAmount(car.amount)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            {reportData?.data.pagination && (
+              <div className="flex justify-between items-center mt-4">
+                <p className="text-sm text-gray-500">
+                  Showing {((currentPage - 1) * itemsPerPage) + 1} to{" "}
+                  {Math.min(currentPage * itemsPerPage, reportData.data.pagination.total)} of{" "}
+                  {reportData.data.pagination.total} entries
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === reportData.data.pagination.totalPages}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            )}
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="entered">
+          <Card className="p-6">
+            {reportData?.data.summary && (
+              <div className="grid grid-cols-4 gap-4 mb-6">
+                <div className="bg-primary/10 p-4 rounded-lg">
+                  <h3 className="text-sm font-medium text-primary">Total Cars</h3>
+                  <p className="text-2xl font-bold">{reportData.data.summary.totalCars}</p>
+                </div>
+                <div className="bg-primary/10 p-4 rounded-lg">
+                  <h3 className="text-sm font-medium text-primary">Active Cars</h3>
+                  <p className="text-2xl font-bold">{reportData.data.summary.activeCars}</p>
+                </div>
+                <div className="bg-primary/10 p-4 rounded-lg">
+                  <h3 className="text-sm font-medium text-primary">Exited Cars</h3>
+                  <p className="text-2xl font-bold">{reportData.data.summary.exitedCars}</p>
+                </div>
+                <div className="bg-primary/10 p-4 rounded-lg">
+                  <h3 className="text-sm font-medium text-primary">Total Revenue</h3>
+                  <p className="text-2xl font-bold">
+                    {formatAmount(parseFloat(reportData.data.summary.totalRevenue || "0"))}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Ticket #</TableHead>
+                    <TableHead>Plate Number</TableHead>
+                    <TableHead>Parking Slot</TableHead>
+                    <TableHead>Entry Time</TableHead>
+                    <TableHead>Exit Time</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {reportData?.data.enteredCars?.map((car) => (
+                    <TableRow key={car.id}>
+                      <TableCell>{car.ticket_number}</TableCell>
+                      <TableCell>{car.plate_number}</TableCell>
+                      <TableCell>
+                        {car.ParkingSlot.name} ({car.ParkingSlot.location})
+                      </TableCell>
+                      <TableCell>{formatDate(car.entry_time)}</TableCell>
+                      <TableCell>
+                        {car.exit_time ? formatDate(car.exit_time) : "Active"}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {car.amount ? formatAmount(car.amount) : "-"}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            {reportData?.data.pagination && (
+              <div className="flex justify-between items-center mt-4">
+                <p className="text-sm text-gray-500">
+                  Showing {((currentPage - 1) * itemsPerPage) + 1} to{" "}
+                  {Math.min(currentPage * itemsPerPage, reportData.data.pagination.total)} of{" "}
+                  {reportData.data.pagination.total} entries
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === reportData.data.pagination.totalPages}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            )}
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 } 
