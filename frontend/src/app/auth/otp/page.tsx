@@ -6,12 +6,14 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { FiLock } from "react-icons/fi";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function OtpPage() {
   const [otp, setOtp] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
   const [email, setEmail] = useState<string | null>(null);
+  const { verifyOtp } = useAuth();
 
   useEffect(() => {
     const pendingEmail = sessionStorage.getItem("pendingEmail");
@@ -25,24 +27,18 @@ export default function OtpPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!email) return;
+    
     setSubmitting(true);
     try {
-      const res = await fetch("http://localhost:5000/api/auth/verify-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, otp }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "OTP verification failed");
-      // Store JWT and redirect
-      localStorage.setItem("authToken", data.token);
-      sessionStorage.removeItem("pendingEmail");
-      toast.success("OTP verified! Redirecting...");
-      router.push("/dashboard");
+      const success = await verifyOtp(email, otp);
+      if (success) {
+        toast.success("OTP verified! Redirecting...");
+        router.push("/dashboard");
+      }
     } catch (error) {
       toast.error("OTP verification failed", {
-        description:
-          error instanceof Error ? error.message : "Invalid OTP or email.",
+        description: error instanceof Error ? error.message : "Invalid OTP or email.",
       });
     } finally {
       setSubmitting(false);

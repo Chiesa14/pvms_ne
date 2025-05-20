@@ -52,7 +52,7 @@ export const loginUser = async (req, res) => {
         // Remove any previous OTPs for this user
         await Otp.destroy({ where: { userId: user.id } });
         // Save new OTP
-        await Otp.create({ userId: user.id, code: otpCode, expiresAt });
+        await Otp.create({ userId: user.id, code: otpCode, expiresAt }); 
 
         // Send OTP via email
         await sendEmail(user.email, 'Your OTP Code', `Your OTP code is ${otpCode}`);

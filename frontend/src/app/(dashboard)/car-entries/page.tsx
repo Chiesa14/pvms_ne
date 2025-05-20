@@ -235,7 +235,7 @@ export default function CarEntriesPage() {
             entry.entry_time,
             new Date().toISOString()
           ),
-          amount: data.amount || 0,
+          amount: data.bill.amount,
         };
 
         setCurrentBill(bill);
@@ -249,11 +249,15 @@ export default function CarEntriesPage() {
         }
       }
 
-      // Refresh entries
+      // Refresh entries with updated data
       setEntries((prev) =>
         prev.map((entry) =>
           entry.id === id
-            ? { ...entry, exit_time: new Date().toISOString() }
+            ? { 
+                ...entry, 
+                exit_time: new Date().toISOString(),
+                amount: data.bill.amount 
+              }
             : entry
         )
       );

@@ -185,7 +185,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (response.ok) {
         const { token, user: userData } = await response.json();
         localStorage.setItem("authToken", token);
-        setUser({ ...userData, isVerified: true });
+        
+        // Fetch complete user data
+        const userResponse = await fetch("http://localhost:5000/api/users/me", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        console.log(userResponse);
+        
+        if (userResponse.ok) {
+          const completeUserData = await userResponse.json();
+          setUser(completeUserData);
+        } else {
+          setUser({ ...userData, isVerified: true });
+        }
+        
         sessionStorage.removeItem("pendingEmail");
         return true;
       }
