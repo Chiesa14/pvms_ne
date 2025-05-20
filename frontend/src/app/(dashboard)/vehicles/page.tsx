@@ -139,23 +139,62 @@ export default function VehiclesPage() {
           <thead>
             <tr className="bg-gray-100">
               <th className="p-2 text-left">Plate Number</th>
-              <th className="p-2 text-left">Brand</th>
-              <th className="p-2 text-left">Model</th>
-              <th className="p-2 text-left">Color</th>
+              <th className="hidden md:table-cell p-2 text-left">Brand</th>
+              <th className="hidden lg:table-cell p-2 text-left">Model</th>
+              <th className="hidden md:table-cell p-2 text-left">Color</th>
               {user?.role === "user" && <th className="p-2">Actions</th>}
             </tr>
           </thead>
           <tbody>
             {vehicles.map((v) => (
               <tr key={v.id} className="border-b">
-                <td className="p-2">{v.plate_number}</td>
-                <td className="p-2">{v.brand}</td>
-                <td className="p-2">{v.model}</td>
-                <td className="p-2">{v.color}</td>
+                <td className="p-2">
+                  <div className="flex flex-col">
+                    <span className="font-medium">{v.plate_number}</span>
+                    <span className="md:hidden text-sm text-gray-500">
+                      {v.brand} {v.model}
+                    </span>
+                  </div>
+                </td>
+                <td className="hidden md:table-cell p-2">{v.brand}</td>
+                <td className="hidden lg:table-cell p-2">{v.model}</td>
+                <td className="hidden md:table-cell p-2">{v.color}</td>
                 {user?.role === "user" && (
-                  <td className="p-2 flex gap-2 flex justify-center">
-                    <Button size="sm" variant="outline" onClick={() => handleEdit(v)}>Edit</Button>
-                    <Button size="sm" variant="destructive" onClick={() => handleDelete(v.id)}>Delete</Button>
+                  <td className="p-2">
+                    <div className="flex gap-2 justify-center">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={() => handleEdit(v)}
+                        className="hidden sm:inline-flex"
+                      >
+                        Edit
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="destructive" 
+                        onClick={() => handleDelete(v.id)}
+                        className="hidden sm:inline-flex"
+                      >
+                        Delete
+                      </Button>
+                      <div className="sm:hidden flex gap-1">
+                        <Button 
+                          size="icon" 
+                          variant="outline" 
+                          onClick={() => handleEdit(v)}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+                        </Button>
+                        <Button 
+                          size="icon" 
+                          variant="destructive" 
+                          onClick={() => handleDelete(v.id)}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                        </Button>
+                      </div>
+                    </div>
                   </td>
                 )}
               </tr>

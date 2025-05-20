@@ -16,6 +16,7 @@ interface ParkingSlot {
   available_spaces: number;
   location: string;
   fee_per_hour: number;
+  total_spaces: number;
 }
 
 export default function ParkingSlotsPage() {
@@ -280,38 +281,89 @@ export default function ParkingSlotsPage() {
               onChange={(e) => handleSearchChange(e.target.value)}
             />
           </div>
-          {loading ? (
-            <div>Loading parking slots...</div>
-          ) : !Array.isArray(slots) || slots.length === 0 ? (
-            <div className="text-gray-500">No parking slots found.</div>
-          ) : (
-            <div className="grid gap-4">
-              {slots.map((slot) => (
-                <Card
-                  key={slot.id}
-                  className="flex flex-row items-center justify-between p-4"
-                >
-                  <div>
-                    <div className="font-bold">{slot.name} ({slot.code})</div>
-                    <div className="text-sm text-gray-500">
-                      {slot.location} | Available: {slot.available_spaces} | Fee/hr: {slot.fee_per_hour} rwf
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => handleEdit(slot)}>
-                      Edit
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      onClick={() => handleDelete(slot.id)}
-                    >
-                      Delete
-                    </Button>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          )}
+          <Card className="overflow-x-auto mb-8">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="p-2 text-left">Code</th>
+                  <th className="hidden md:table-cell p-2 text-left">Location</th>
+                  <th className="hidden md:table-cell p-2 text-left">Available</th>
+                  <th className="p-2 text-left">Status</th>
+                  {user?.role === "admin" && <th className="p-2">Actions</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {slots.map((slot) => (
+                  <tr key={slot.code} className="border-b">
+                    <td className="p-2">
+                      <div className="flex flex-col">
+                        <span className="font-medium">{slot.code}</span>
+                        <span className="md:hidden text-sm text-gray-500">
+                          {slot.available_spaces} spaces
+                        </span>
+                      </div>
+                    </td>
+                    <td className="hidden md:table-cell p-2">{slot.location}</td>
+                    <td className="hidden md:table-cell p-2">{slot.available_spaces}</td>
+                    <td className="p-2">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        slot.available_spaces === 0
+                          ? "bg-red-100 text-red-800"
+                          : slot.available_spaces < slot.total_spaces / 2
+                          ? "bg-yellow-100 text-yellow-800"
+                          : "bg-green-100 text-green-800"
+                      }`}>
+                        {slot.available_spaces === 0
+                          ? "Full"
+                          : slot.available_spaces < slot.total_spaces / 2
+                          ? "Limited"
+                          : "Available"}
+                      </span>
+                    </td>
+                    {user?.role === "admin" && (
+                      <td className="p-2">
+                        <div className="flex gap-2 justify-center">
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            onClick={() => handleEdit(slot)}
+                            className="hidden sm:inline-flex"
+                          >
+                            Edit
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="destructive" 
+                            onClick={() => handleDelete(slot.id)}
+                            className="hidden sm:inline-flex"
+                          >
+                            Delete
+                          </Button>
+                          <div className="sm:hidden flex gap-1">
+                            <Button 
+                              size="icon" 
+                              variant="outline" 
+                              onClick={() => handleEdit(slot)}
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+                            </Button>
+                            <Button 
+                              size="icon" 
+                              variant="destructive" 
+                              onClick={() => handleDelete(slot.id)}
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                            </Button>
+                          </div>
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {slots.length === 0 && !loading && <div className="p-4 text-center">No parking slots found.</div>}
+          </Card>
           <div className="mt-6">
             <Pagination
               currentPage={page}

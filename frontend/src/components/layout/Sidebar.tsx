@@ -50,7 +50,7 @@ const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
   const handleLogout = () => {
     logout();
     toast.success("Logged out successfully");
-    router.push("/auth/login");
+    router.push("/");
   };
 
   type SidebarItem = { icon: any; title: string; href: string };

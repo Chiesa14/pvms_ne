@@ -356,16 +356,16 @@ export default function CarEntriesPage() {
                   <th className="p-4 text-left font-medium text-gray-600">
                     Plate Number
                   </th>
-                  <th className="p-4 text-left font-medium text-gray-600">
+                  <th className="hidden md:table-cell p-4 text-left font-medium text-gray-600">
                     Parking Code
                   </th>
-                  <th className="p-4 text-left font-medium text-gray-600">
+                  <th className="hidden lg:table-cell p-4 text-left font-medium text-gray-600">
                     Entry Time
                   </th>
-                  <th className="p-4 text-left font-medium text-gray-600">
+                  <th className="hidden lg:table-cell p-4 text-left font-medium text-gray-600">
                     Exit Time
                   </th>
-                  <th className="p-4 text-left font-medium text-gray-600">
+                  <th className="hidden md:table-cell p-4 text-left font-medium text-gray-600">
                     Amount
                   </th>
                   <th className="p-4 text-left font-medium text-gray-600">
@@ -380,18 +380,18 @@ export default function CarEntriesPage() {
                       {entry.ticket_number}
                     </td>
                     <td className="p-4">{entry.plate_number}</td>
-                    <td className="p-4">{entry.parking_code}</td>
-                    <td className="p-4">
+                    <td className="hidden md:table-cell p-4">{entry.parking_code}</td>
+                    <td className="hidden lg:table-cell p-4">
                       {entry.entry_time
                         ? new Date(entry.entry_time).toLocaleString()
                         : "-"}
                     </td>
-                    <td className="p-4">
+                    <td className="hidden lg:table-cell p-4">
                       {entry.exit_time
                         ? new Date(entry.exit_time).toLocaleString()
                         : "-"}
                     </td>
-                    <td className="p-4 font-medium">
+                    <td className="hidden md:table-cell p-4 font-medium">
                       {entry.amount ? `${entry.amount} rwf` : "-"}
                     </td>
                     <td className="p-4">
@@ -414,7 +414,7 @@ export default function CarEntriesPage() {
                           className="hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200"
                         >
                           <Receipt className="w-4 h-4 mr-1" />
-                          View Bill
+                          <span className="hidden sm:inline">View Bill</span>
                         </Button>
                       </div>
                     </td>

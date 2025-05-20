@@ -132,37 +132,37 @@ export default function ReportsPage() {
 
   return (
     <div className="w-full">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <h1 className="text-2xl font-bold">Parking Reports</h1>
-        <div className="flex gap-4">
+        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
           <Input
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            className="w-48"
+            className="w-full sm:w-48"
           />
           <Input
             type="date"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
-            className="w-48"
+            className="w-full sm:w-48"
           />
-          <Button onClick={handleDateChange} disabled={isLoading}>
+          <Button onClick={handleDateChange} disabled={isLoading} className="w-full sm:w-auto">
             {isLoading ? "Loading..." : "Generate Report"}
           </Button>
         </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <TabsList className="mb-4">
-          <TabsTrigger value="outgoing">Outgoing Cars</TabsTrigger>
-          <TabsTrigger value="entered">Entered Cars</TabsTrigger>
+        <TabsList className="mb-4 w-full sm:w-auto">
+          <TabsTrigger value="outgoing" className="flex-1 sm:flex-none">Outgoing Cars</TabsTrigger>
+          <TabsTrigger value="entered" className="flex-1 sm:flex-none">Entered Cars</TabsTrigger>
         </TabsList>
 
         <TabsContent value="outgoing">
           <Card className="p-6">
             {reportData?.data.summary && (
-              <div className="grid grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                 <div className="bg-primary/10 p-4 rounded-lg">
                   <h3 className="text-sm font-medium text-primary">Total Cars</h3>
                   <p className="text-2xl font-bold">{reportData.data.summary.totalCars}</p>
@@ -189,23 +189,30 @@ export default function ReportsPage() {
                   <TableRow>
                     <TableHead>Ticket #</TableHead>
                     <TableHead>Plate Number</TableHead>
-                    <TableHead>Parking Slot</TableHead>
-                    <TableHead>Entry Time</TableHead>
-                    <TableHead>Exit Time</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
+                    <TableHead className="hidden md:table-cell">Parking Slot</TableHead>
+                    <TableHead className="hidden lg:table-cell">Entry Time</TableHead>
+                    <TableHead className="hidden lg:table-cell">Exit Time</TableHead>
+                    <TableHead className="hidden md:table-cell text-right">Amount</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {reportData?.data.outgoingCars?.map((car) => (
                     <TableRow key={car.id}>
                       <TableCell>{car.ticket_number}</TableCell>
-                      <TableCell>{car.plate_number}</TableCell>
                       <TableCell>
+                        <div className="flex flex-col">
+                          <span>{car.plate_number}</span>
+                          <span className="md:hidden text-sm text-gray-500">
+                            {car.ParkingSlot.name}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
                         {car.ParkingSlot.name} ({car.ParkingSlot.location})
                       </TableCell>
-                      <TableCell>{formatDate(car.entry_time)}</TableCell>
-                      <TableCell>{formatDate(car.exit_time!)}</TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="hidden lg:table-cell">{formatDate(car.entry_time)}</TableCell>
+                      <TableCell className="hidden lg:table-cell">{formatDate(car.exit_time!)}</TableCell>
+                      <TableCell className="hidden md:table-cell text-right">
                         {formatAmount(car.amount)}
                       </TableCell>
                     </TableRow>
@@ -215,7 +222,7 @@ export default function ReportsPage() {
             </div>
 
             {reportData?.data.pagination && (
-              <div className="flex justify-between items-center mt-4">
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-4">
                 <p className="text-sm text-gray-500">
                   Showing {((currentPage - 1) * itemsPerPage) + 1} to{" "}
                   {Math.min(currentPage * itemsPerPage, reportData.data.pagination.total)} of{" "}
@@ -245,7 +252,7 @@ export default function ReportsPage() {
         <TabsContent value="entered">
           <Card className="p-6">
             {reportData?.data.summary && (
-              <div className="grid grid-cols-4 gap-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 <div className="bg-primary/10 p-4 rounded-lg">
                   <h3 className="text-sm font-medium text-primary">Total Cars</h3>
                   <p className="text-2xl font-bold">{reportData.data.summary.totalCars}</p>
@@ -273,25 +280,32 @@ export default function ReportsPage() {
                   <TableRow>
                     <TableHead>Ticket #</TableHead>
                     <TableHead>Plate Number</TableHead>
-                    <TableHead>Parking Slot</TableHead>
-                    <TableHead>Entry Time</TableHead>
-                    <TableHead>Exit Time</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
+                    <TableHead className="hidden md:table-cell">Parking Slot</TableHead>
+                    <TableHead className="hidden lg:table-cell">Entry Time</TableHead>
+                    <TableHead className="hidden lg:table-cell">Exit Time</TableHead>
+                    <TableHead className="hidden md:table-cell text-right">Amount</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {reportData?.data.enteredCars?.map((car) => (
                     <TableRow key={car.id}>
                       <TableCell>{car.ticket_number}</TableCell>
-                      <TableCell>{car.plate_number}</TableCell>
                       <TableCell>
+                        <div className="flex flex-col">
+                          <span>{car.plate_number}</span>
+                          <span className="md:hidden text-sm text-gray-500">
+                            {car.ParkingSlot.name}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
                         {car.ParkingSlot.name} ({car.ParkingSlot.location})
                       </TableCell>
-                      <TableCell>{formatDate(car.entry_time)}</TableCell>
-                      <TableCell>
+                      <TableCell className="hidden lg:table-cell">{formatDate(car.entry_time)}</TableCell>
+                      <TableCell className="hidden lg:table-cell">
                         {car.exit_time ? formatDate(car.exit_time) : "Active"}
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="hidden md:table-cell text-right">
                         {car.amount ? formatAmount(car.amount) : "-"}
                       </TableCell>
                     </TableRow>
@@ -301,7 +315,7 @@ export default function ReportsPage() {
             </div>
 
             {reportData?.data.pagination && (
-              <div className="flex justify-between items-center mt-4">
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-4">
                 <p className="text-sm text-gray-500">
                   Showing {((currentPage - 1) * itemsPerPage) + 1} to{" "}
                   {Math.min(currentPage * itemsPerPage, reportData.data.pagination.total)} of{" "}
