@@ -6,11 +6,11 @@ export async function initializeAdmin() {
         // Check for existing admin using email only
         const [adminUser, created] = await User.findOrCreate({
             where: {
-                email: 'tishok14@gmail.com',
+                email: 'usanasequeen@gmail.com',
             },
             defaults: {
-                email: 'tishok14@gmail.com',
-                password: await bcrypt.hash('Password123!', 10),
+                email: 'usanasequeen@gmail.com',
+                password: await bcrypt.hash('123456', 10),
                 firstName: 'Admin',
                 lastName: 'User',
                 role: 'admin',
